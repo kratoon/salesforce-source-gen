@@ -19,7 +19,10 @@
     "force.com",
     "source",
     "ts",
-    "salesforcedx"
+    "salesforcedx",
+    "sfdx",
+    "source-gen",
+    "salesforce-metadata"
   ],
   "author": "Ondřej Kratochvíl <ondrakratochvil96@gmail.com>",
   "license": "Apache-2.0",
