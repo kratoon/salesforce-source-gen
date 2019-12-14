@@ -1,0 +1,51 @@
+{
+  "name": "salesforce-source-gen",
+  "version": "0.0.4",
+  "description": "Generate Salesforce source files directly from your source.",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "lint": "tslint src/**/*.ts",
+    "prepublishOnly": "npm run build && npm run lint",
+    "coverage": "jest --coverage"
+  },
+  "bin" : {
+    "salesforce-source-gen": "./src/cli.js"
+  },
+  "keywords": [
+    "salesforce",
+    "force.com",
+    "source",
+    "ts",
+    "salesforcedx"
+  ],
+  "author": "Ondřej Kratochvíl <ondrakratochvil96@gmail.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "find": "^0.3.0",
+    "fs-extra": "^8.1.0",
+    "salesforce-metadata": "^0.0.6",
+    "slash": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/find": "^0.2.1",
+    "@types/fs-extra": "^8.0.1",
+    "@types/jest": "^24.0.23",
+    "@types/xml2js": "^0.4.5",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
+    "tslint": "^5.20.1",
+    "tslint-microsoft-contrib": "^5.2.1",
+    "typescript": "^3.7.2"
+  },
+  "homepage": "https://github.com/kratoon3/salesforce-source-gen",
+  "bugs": {
+    "url": "https://github.com/kratoon3/salesforce-source-gen/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kratoon3/salesforce-source-gen.git"
+  }
+}
