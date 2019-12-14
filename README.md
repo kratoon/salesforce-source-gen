@@ -12,7 +12,7 @@ Configure your project with package.json file.
 
 ## Record Types
 Generate record types class from record types defined in your source.
-You can simply use `RecordTypes.ACCOUNT_AGENT_ID`
+With generated class you can use `RecordTypes.ACCOUNT_AGENT_ID`
 instead of `Schema.SObjectType.Account.getRecordTypeInfosByDeveloperName().get('Agent');`
 or `RecordTypes.ACCOUNT_AGENT` to access RecordTypeInfo.
 
