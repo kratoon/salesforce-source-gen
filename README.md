@@ -16,7 +16,7 @@ You can simply use `RecordTypes.ACCOUNT_AGENT_ID`
 instead of `Schema.SObjectType.Account.getRecordTypeInfosByDeveloperName().get('Agent');`
 or `RecordTypes.ACCOUNT_AGENT` to access RecordTypeInfo.
 
-Options:
+##### Options:
 * projectDir - Default: current working directory.
 * outputDir - Default: default package directory from sfdx-project.json.
 * outputClassName - Default: 'RecordTypes'.
@@ -25,7 +25,7 @@ Options:
 * tests - Generate test class. Default: true
 * trimCustomSuffix - Cut '__c' from object names. Default: true.
 
-Example package.json:
+##### Example package.json:
 ```json
 {
   "scripts": {
