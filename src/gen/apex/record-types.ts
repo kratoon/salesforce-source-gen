@@ -196,11 +196,11 @@ function buildTestRecordTypeProperty(
 }
 
 function findCustomObjectChildFiles(project: Project, childXmlName: string): string[] {
-    return find.fileSync(new RegExp(`.*?/objects/.*?/?\.${childXmlName}-meta\.xml`), project.path);
+    return find.fileSync(new RegExp(`.*?[/\\\\\]objects[/\\\\\].*?[/\\\\\]?\.${childXmlName}-meta\.xml`), project.path);
 }
 
 function pathToObjectName(path: string): string | undefined {
-    const execResult: any = slash(path).match(/.*\/objects\/(.*?)\/.*/);
+    const execResult: any = slash(path).match(/.*[/\\]objects[/\\](.*?)[/\\].*/);
     return execResult ? execResult[1] : undefined;
 }
 
