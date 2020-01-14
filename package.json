@@ -1,6 +1,6 @@
 {
   "name": "salesforce-source-gen",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Generate Salesforce source files directly from your source.",
   "main": "src/index.js",
   "types": "src/index.d.ts",

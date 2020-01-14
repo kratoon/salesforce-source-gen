@@ -6,7 +6,7 @@ Generate Salesforce source files directly from your source.
 Currently, only DX projects are supported.
 
 ## Installation.
-Install globally using `npm i --global salesforce-source-gen`.
+Install globally using `npm i --save-dev salesforce-source-gen`.
 
 Configure your project with package.json file.
 
@@ -15,6 +15,8 @@ Generate record types class from record types defined in your source.
 With generated class you can use `RecordTypes.ACCOUNT_AGENT_ID`
 instead of `Schema.SObjectType.Account.getRecordTypeInfosByDeveloperName().get('Agent');`
 or `RecordTypes.ACCOUNT_AGENT` to access RecordTypeInfo.
+
+Configure generation in the package.json file and run `npm run gen-record-types`.
 
 ##### Options:
 * projectDir - Default: current working directory.
