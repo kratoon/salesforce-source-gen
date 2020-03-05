@@ -164,8 +164,9 @@ function generatePicklistClassesFromStandardValueSets(
                 }
                 const availableLength: number = APEX_CLASS_NAME_MAX_LEN -
                     (standardValueSetPrefix.length + standardValueSetSuffix.length);
+                // todo fix LeadStatus conflict
                 const baseName: string = (CONFLICT_VALUE_SET_NAMES.includes(valueSetName)
-                    ? `${valueSetName}_` : valueSetName).substring(0, availableLength);
+                    ? `${valueSetName}2` : valueSetName).substring(0, availableLength);
                 const className: string = `${standardValueSetPrefix}${baseName}${standardValueSetSuffix}`;
                 const content: string | undefined = buildApexClassContentFromStandardValueSet(
                     it.StandardValueSet, valueSetName, className
