@@ -25,11 +25,11 @@ export interface RecordTypesGenOptions {
      */
     sourceApiVersion?: string;
     /**
-     * Include inactive record types. Default: false.
+     * Include inactive record types.
      */
     includeInactive?: boolean;
     /**
-     * Do not generate test class. Default: false.
+     * Do not generate test class.
      */
     ignoreTestClass?: boolean;
 }
