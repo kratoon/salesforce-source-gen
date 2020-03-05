@@ -6,15 +6,18 @@ export default class Picklists extends Command {
 
     public static flags: flags.Input<any> = {
         help: flags.help({char: "h"}),
-        projectDir: flags.string({description: "Default: current working directory"}),
-        outputDir: flags.string({description: "Default: default package directory from sfdx-project.json."}),
+        projectDir: flags.string({description: "Default: current working directory."}),
+        outputDir: flags.string({description: "Default: default package directory."}),
         sourceApiVersion: flags.string({description: "Default: from sfdx-project.json."}),
+        picklistPrefix: flags.string({description: "Prefix for classes generated from custom fields. Default: empty."}),
         picklistSuffix: flags.string({description: "Suffix for classes generated from custom fields. Default: empty."}),
+        picklistInfix: flags.string({description: "String between sobject name and field name. Default: '_'."}),
+        standardValueSetPrefix: flags.string({description: "Prefix for classes generated from standard value sets. Default: empty."}),
         standardValueSetSuffix: flags.string({description: "Suffix for classes generated from standard value sets. Default: empty."})
     };
 
     public async run(): Promise<any> {
-        const {flags: f} = this.parse(Picklists);
-        generatePicklistClasses(f);
+        const {flags: options} = this.parse(Picklists);
+        generatePicklistClasses(options);
     }
 }
