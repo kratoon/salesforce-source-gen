@@ -31,10 +31,12 @@ USAGE
 
 Optionally, you can configure `scripts` in your package.json file.
 ```json
+{
   "scripts": {
-    "record-types": "salesforce-source-gen record-types"
+    "record-types": "salesforce-source-gen record-types",
     "picklists": "salesforce-source-gen picklists"
   }
+}
 ``` 
 
 # Commands
