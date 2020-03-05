@@ -3,7 +3,7 @@ import {join} from "path";
 import {ApexClass, CustomField, readMetadataXML, writeMetadataXML} from "salesforce-metadata";
 import {findFilesByMetadataType} from "salesforce-metadata/src/find-metadata";
 import {
-    CustomValue, StandardValue,
+    CustomValue, GlobalValueSet, StandardValue,
     StandardValueSet,
     ValueSet,
     ValueSetValuesDefinition
@@ -11,6 +11,10 @@ import {
 import slash from "slash";
 import {loadProject, Project} from "../../project";
 import {apexNotice} from "./notice";
+
+const APEX_CLASS_NAME_MAX_LEN: number = 40;
+
+const CONFLICT_VALUE_SET_NAMES: string[] = ["LeadStatus"];
 
 export interface PicklistsGenOptions {
     /**
@@ -26,34 +30,92 @@ export interface PicklistsGenOptions {
      */
     sourceApiVersion?: string;
     /**
+     * Ignore custom fields.
+     */
+    ignorePicklists?: boolean;
+    /**
+     * Ignore standard value sets.
+     */
+    ignoreStandardValueSets?: boolean;
+    /**
+     * Ignore global value sets.
+     */
+    ignoreGlobalValueSets?: boolean;
+    /**
+     * Prefix for classes generated from custom fields. Default: empty.
+     */
+    customFieldPrefix?: string;
+    /**
      * Suffix for classes generated from custom fields. Default: empty.
      */
-    picklistSuffix?: string;
+    customFieldSuffix?: string;
+    /**
+     * String between sobject name and field name. Default: '_'.
+     */
+    customFieldInfix?: string;
+    /**
+     * Prefix for classes generated from standard value sets. Default: empty.
+     */
+    standardValueSetPrefix?: string;
     /**
      * Suffix for classes generated from standard value sets. Default: empty.
      */
     standardValueSetSuffix?: string;
     /**
+     * Prefix for classes generated from global value sets. Default: empty.
+     */
+    globalValueSetPrefix?: string;
+    /**
      * Suffix for classes generated from global value sets. Default: empty.
      */
-    // globalValueSetSuffix?: string;
+    globalValueSetSuffix?: string;
 }
 
 export function generatePicklistClasses(options: PicklistsGenOptions = {}): void {
     const project: Project = loadProject(options.projectDir || ".");
     if (!project.isDx) {
-        throw Error("Only DX projects are currently supported.");
+        throw Error("Only DX projects are supported.");
     }
     // Get options with default values.
     const outputDir: string = options.outputDir || project.join(project.sfdxDefaultProjectDirectory, "main", "default", "classes");
     const sourceApiVersion: string = options.sourceApiVersion || project.sourceApiVersion;
-    const trimCustomSuffix: boolean = true;
-    const picklistSuffix: string = options.picklistSuffix || "";
+    const customFieldPrefix: string = options.customFieldPrefix || "";
+    const customFieldSuffix: string = options.customFieldSuffix || "";
+    const customFieldInfix: string = options.customFieldInfix || "_";
+    const standardValueSetPrefix: string = options.standardValueSetPrefix || "";
     const standardValueSetSuffix: string = options.standardValueSetSuffix || "";
+    const globalValueSetPrefix: string = options.globalValueSetPrefix || "";
+    const globalValueSetSuffix: string = options.globalValueSetSuffix || "";
+    const chain: Promise<void> = Promise.resolve();
+    if (!options.ignorePicklists) {
+        chain.then(() => generatePicklistClassesFromCustomFields(
+            project, outputDir, customFieldInfix, customFieldPrefix, customFieldSuffix, sourceApiVersion
+        ));
+    }
+    if (!options.ignoreStandardValueSets) {
+        chain.then(() => generatePicklistClassesFromStandardValueSets(project, outputDir,
+            standardValueSetPrefix, standardValueSetSuffix, sourceApiVersion
+        ));
+    }
+    if (!options.ignoreGlobalValueSets) {
+        chain.then(() => generatePicklistClassesFromGlobalValueSets(project, outputDir,
+            globalValueSetPrefix, globalValueSetSuffix, sourceApiVersion
+        ));
+    }
+}
+
+function generatePicklistClassesFromCustomFields(
+    project: Project,
+    outputDir: string,
+    infix: string,
+    prefix: string,
+    suffix: string,
+    sourceApiVersion: string
+): Promise<void> {
+    console.log("Building constant classes from custom fields.");
     const customFieldPaths: string[] = findFilesByMetadataType("CustomField", project.path);
-    Promise.all(customFieldPaths.map(readMetadataXML))
+    return Promise.all(customFieldPaths.map(readMetadataXML))
         .then((fields) => {
-            console.log("Building value set classes from custom fields.");
             fields.forEach((it: { CustomField: CustomField }, idx) => {
                 if (it.CustomField && it.CustomField.fullName && isFieldWithValueSet(it.CustomField)) {
                     const fieldPath: string = customFieldPaths[idx];
@@ -62,12 +124,13 @@ export function generatePicklistClasses(options: PicklistsGenOptions = {}): void
                         throw Error(`Couldn't parse object name from path ${fieldPath}`);
                     }
                     const fieldName: string = it.CustomField.fullName[0];
-                    const trimmedObjectName: string = trimCustomSuffix
-                        ? objectName.replace(/__c|__mdt|_/g, "") : objectName;
-                    const trimmedFieldName: string = trimCustomSuffix
-                        ? fieldName.replace(/__c|__mdt|_/g, "") : fieldName;
-                    // Class name max 40
-                    const className: string = `${(trimmedObjectName + trimmedFieldName).substring(0, 40 - picklistSuffix.length)}${picklistSuffix}`;
+                    const trimmedObjectName: string = objectName.replace(/__c|__mdt|_/g, "");
+                    const trimmedFieldName: string = fieldName.replace(/__c|__mdt|_/g, "");
+                    const availableLength: number = APEX_CLASS_NAME_MAX_LEN -
+                        (prefix.length + infix.length + suffix.length);
+                    const fullBaseName: string = `${trimmedObjectName}${infix}${trimmedFieldName}`;
+                    const baseName: string = fullBaseName.substring(0, availableLength);
+                    const className: string = `${prefix}${baseName}${suffix}`;
                     const content: string | undefined = buildApexClassContentFromPicklistField(
                         it.CustomField, objectName, className
                     );
@@ -79,31 +142,78 @@ export function generatePicklistClasses(options: PicklistsGenOptions = {}): void
                     }
                 }
             });
-        })
-        .then(() => {
-            const standardValueSetPaths: string[] = findFilesByMetadataType("StandardValueSet", project.path);
-            Promise.all(standardValueSetPaths.map(readMetadataXML))
-                .then((sets) => {
-                    console.log("Building value set classes from standard value sets.");
-                    sets.forEach((it: { StandardValueSet: StandardValueSet}, idx) => {
-                        const setPath: string = standardValueSetPaths[idx];
-                        const valueSetName: string | undefined = pathToMetadataName(setPath, "standardValueSets", "\.standardValueSet-meta\.xml");
-                        if (!valueSetName) {
-                            throw Error(`Couldn't parse standard value set name from path ${setPath}`);
-                        }
-                        // Class name max 40
-                        const className: string = `${valueSetName.substring(0, 40 - standardValueSetSuffix.length)}${standardValueSetSuffix}`;
-                        const content: string | undefined = buildApexClassContentFromStandardValueSet(
-                            it.StandardValueSet, valueSetName, className
-                        );
-                        if (content) {
-                            writeApexClassFile(join(outputDir, `${className}.cls`), content);
-                            writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
-                        } else {
-                            console.log(`No values, skipping: ${valueSetName}`);
-                        }
-                    });
-                });
+        });
+}
+
+function generatePicklistClassesFromStandardValueSets(
+    project: Project,
+    outputDir: string,
+    prefix: string,
+    suffix: string,
+    sourceApiVersion: string
+): Promise<void> {
+    const standardValueSetPaths: string[] = findFilesByMetadataType("StandardValueSet", project.path);
+    return Promise.all(standardValueSetPaths.map(readMetadataXML))
+        .then((sets) => {
+            console.log("Building constant classes from standard value sets.");
+            sets.forEach((it: { StandardValueSet: StandardValueSet}, idx) => {
+                const setPath: string = standardValueSetPaths[idx];
+                const valueSetName: string | undefined = pathToMetadataName(setPath, "standardValueSets", "\.standardValueSet-meta\.xml");
+                if (!valueSetName) {
+                    throw Error(`Couldn't parse standard value set name from path ${setPath}`);
+                }
+                const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
+                // todo fix LeadStatus conflict
+                if (CONFLICT_VALUE_SET_NAMES.includes(valueSetName)) {
+                    console.warn(`Conflict with SObject, ignoring: ${valueSetName}`);
+                    return;
+                }
+                const baseName: string = (CONFLICT_VALUE_SET_NAMES.includes(valueSetName)
+                    ? `${valueSetName}2` : valueSetName).substring(0, availableLength);
+                const className: string = `${prefix}${baseName}${suffix}`;
+                const content: string | undefined = buildApexClassContentFromStandardValueSet(
+                    it.StandardValueSet, valueSetName, className
+                );
+                if (content) {
+                    writeApexClassFile(join(outputDir, `${className}.cls`), content);
+                    writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
+                } else {
+                    console.log(`No values, skipping: ${valueSetName}`);
+                }
+            });
+        });
+}
+
+function generatePicklistClassesFromGlobalValueSets(
+    project: Project,
+    outputDir: string,
+    prefix: string,
+    suffix: string,
+    sourceApiVersion: string
+): Promise<void> {
+    const globalValueSetPaths: string[] = findFilesByMetadataType("GlobalValueSet", project.path);
+    return Promise.all(globalValueSetPaths.map(readMetadataXML))
+        .then((sets) => {
+            console.log("Building constant classes from global value sets.");
+            sets.forEach((it: { GlobalValueSet: GlobalValueSet }, idx) => {
+                const setPath: string = globalValueSetPaths[idx];
+                const valueSetName: string | undefined = pathToMetadataName(setPath, "globalValueSets", "\.globalValueSet-meta\.xml");
+                if (!valueSetName) {
+                    throw Error(`Couldn't parse global value set name from path ${setPath}`);
+                }
+                const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
+                const baseName: string = valueSetName.substring(0, availableLength);
+                const className: string = `${prefix}${baseName}${suffix}`;
+                const content: string | undefined = buildApexClassContentFromGlobalValueSet(
+                    it.GlobalValueSet, valueSetName, className
+                );
+                if (content) {
+                    writeApexClassFile(join(outputDir, `${className}.cls`), content);
+                    writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
+                } else {
+                    console.log(`No values, skipping: ${valueSetName}`);
+                }
+            });
         });
 }
 
@@ -126,6 +236,23 @@ function buildApexClassContentFromStandardValueSet(
         return `\tpublic static final String ${propertyName} = '${value}';`;
     });
     const classHeader: string = `/**\n * ${valueSetName} standard value set.\n */\n`;
+    return properties.length === 0 ? undefined : `${apexNotice()}\n${classHeader}public inherited sharing class ${className} {\n\n${properties.join("\n")}\n}`;
+}
+
+function buildApexClassContentFromGlobalValueSet(
+    valueSet: GlobalValueSet,
+    valueSetName: string,
+    className: string,
+): string | undefined {
+    const values: CustomValue[] = valueSet.customValue || [];
+    const properties: string[] = values.filter(it => it.fullName).map(it => {
+        // tslint:disable-next-line:no-non-null-assertion
+        const fullName: string = it.fullName![0];
+        const propertyName: string = ensureValidApexPropertyName(fullName).toUpperCase();
+        const value: string = fullName.replace("'", "\\'");
+        return `\tpublic static final String ${propertyName} = '${value}';`;
+    });
+    const classHeader: string = `/**\n * ${valueSetName} global value set.\n */\n`;
     return properties.length === 0 ? undefined : `${apexNotice()}\n${classHeader}public inherited sharing class ${className} {\n\n${properties.join("\n")}\n}`;
 }
 

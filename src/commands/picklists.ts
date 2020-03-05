@@ -6,15 +6,29 @@ export default class Picklists extends Command {
 
     public static flags: flags.Input<any> = {
         help: flags.help({char: "h"}),
-        projectDir: flags.string({description: "Default: current working directory"}),
-        outputDir: flags.string({description: "Default: default package directory from sfdx-project.json."}),
+        projectDir: flags.string({description: "Default: current working directory."}),
+        outputDir: flags.string({description: "Default: default package directory."}),
         sourceApiVersion: flags.string({description: "Default: from sfdx-project.json."}),
-        picklistSuffix: flags.string({description: "Suffix for classes generated from custom fields. Default: empty."}),
-        standardValueSetSuffix: flags.string({description: "Suffix for classes generated from standard value sets. Default: empty."})
+        ignorePicklists: flags.boolean({description: "Ignore custom fields."}),
+        ignoreStandardValueSets: flags.boolean({description: "Ignore standard value sets."}),
+        ignoreGlobalValueSets: flags.boolean({description: "Ignore global value sets."}),
+        customFieldPrefix: flags.string({
+            description: "Prefix for classes generated from custom fields. Default: empty."
+        }),
+        customFieldSuffix: flags.string({
+            description: "Suffix for classes generated from custom fields. Default: empty."
+        }),
+        customFieldInfix: flags.string({
+            description: "String between sobject name and field name. Default: '_'."
+        }),
+        standardValueSetPrefix: flags.string({description: "Prefix for classes generated from standard value sets. Default: empty."}),
+        standardValueSetSuffix: flags.string({description: "Suffix for classes generated from standard value sets. Default: empty."}),
+        globalValueSetPrefix: flags.string({description: "Suffix for classes generated from global value sets. Default: empty."}),
+        globalValueSetSuffix: flags.string({description: "Suffix for classes generated from global value sets. Default: empty."})
     };
 
     public async run(): Promise<any> {
-        const {flags: f} = this.parse(Picklists);
-        generatePicklistClasses(f);
+        const {flags: options} = this.parse(Picklists);
+        generatePicklistClasses(options);
     }
 }

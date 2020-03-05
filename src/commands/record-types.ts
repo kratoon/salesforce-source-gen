@@ -17,7 +17,7 @@ or \`RecordTypes.ACCOUNT_AGENT\` to access RecordTypeInfo.`;
     };
 
     public async run(): Promise<any> {
-        const {flags: f} = this.parse(RecordTypes);
-        generateRecordTypesClass(f);
+        const {flags: options} = this.parse(RecordTypes);
+        generateRecordTypesClass(options);
     }
 }

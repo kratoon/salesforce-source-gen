@@ -21,7 +21,7 @@ $ npm install -g salesforce-source-gen
 $ salesforce-source-gen COMMAND
 running command...
 $ salesforce-source-gen (-v|--version|version)
-salesforce-source-gen/0.0.7 linux-x64 node-v8.10.0
+salesforce-source-gen/0.0.9 linux-x64 node-v8.10.0
 $ salesforce-source-gen --help [COMMAND]
 USAGE
   $ salesforce-source-gen COMMAND
@@ -72,16 +72,26 @@ USAGE
 
 OPTIONS
   -h, --help                                       show CLI help
-  --outputDir=outputDir                            Default: default package directory from sfdx-project.json.
-  --picklistSuffix=picklistSuffix                  Suffix for classes generated from custom fields. Default: empty.
-  --projectDir=projectDir                          Default: current working directory
+  --customFieldInfix=customFieldInfix              String between sobject name and field name. Default: '_'.
+  --customFieldPrefix=customFieldPrefix            Prefix for classes generated from custom fields. Default: empty.
+  --customFieldSuffix=customFieldSuffix            Suffix for classes generated from custom fields. Default: empty.
+  --globalValueSetPrefix=globalValueSetPrefix      Suffix for classes generated from global value sets. Default: empty.
+  --globalValueSetSuffix=globalValueSetSuffix      Suffix for classes generated from global value sets. Default: empty.
+  --ignoreGlobalValueSets                          Ignore global value sets.
+  --ignorePicklists                                Ignore custom fields.
+  --ignoreStandardValueSets                        Ignore standard value sets.
+  --outputDir=outputDir                            Default: default package directory.
+  --projectDir=projectDir                          Default: current working directory.
   --sourceApiVersion=sourceApiVersion              Default: from sfdx-project.json.
+
+  --standardValueSetPrefix=standardValueSetPrefix  Prefix for classes generated from standard value sets. Default:
+                                                   empty.
 
   --standardValueSetSuffix=standardValueSetSuffix  Suffix for classes generated from standard value sets. Default:
                                                    empty.
 ```
 
-_See code: [src/commands/picklists.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.7/src/commands/picklists.ts)_
+_See code: [src/commands/picklists.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.9/src/commands/picklists.ts)_
 
 ## `salesforce-source-gen record-types`
 
@@ -106,5 +116,5 @@ DESCRIPTION
   or `RecordTypes.ACCOUNT_AGENT` to access RecordTypeInfo.
 ```
 
-_See code: [src/commands/record-types.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.7/src/commands/record-types.ts)_
+_See code: [src/commands/record-types.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.9/src/commands/record-types.ts)_
 <!-- commandsstop -->
