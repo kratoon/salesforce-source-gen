@@ -21,7 +21,7 @@ $ npm install -g salesforce-source-gen
 $ salesforce-source-gen COMMAND
 running command...
 $ salesforce-source-gen (-v|--version|version)
-salesforce-source-gen/0.0.6 linux-x64 node-v8.10.0
+salesforce-source-gen/0.0.7 linux-x64 node-v8.10.0
 $ salesforce-source-gen --help [COMMAND]
 USAGE
   $ salesforce-source-gen COMMAND
@@ -81,7 +81,7 @@ OPTIONS
                                                    empty.
 ```
 
-_See code: [src/commands/picklists.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.6/src/commands/picklists.ts)_
+_See code: [src/commands/picklists.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.7/src/commands/picklists.ts)_
 
 ## `salesforce-source-gen record-types`
 
@@ -106,5 +106,5 @@ DESCRIPTION
   or `RecordTypes.ACCOUNT_AGENT` to access RecordTypeInfo.
 ```
 
-_See code: [src/commands/record-types.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.6/src/commands/record-types.ts)_
+_See code: [src/commands/record-types.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.7/src/commands/record-types.ts)_
 <!-- commandsstop -->

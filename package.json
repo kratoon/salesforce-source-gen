@@ -1,6 +1,6 @@
 {
   "name": "salesforce-source-gen",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Generate Salesforce source files directly from your source.",
   "keywords": [
     "salesforce",
