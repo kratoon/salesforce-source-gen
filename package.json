@@ -1,19 +1,7 @@
 {
   "name": "salesforce-source-gen",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Generate Salesforce source files directly from your source.",
-  "main": "src/index.js",
-  "types": "src/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "lint": "tslint src/**/*.ts",
-    "prepublishOnly": "npm run build && npm run lint",
-    "coverage": "jest --coverage"
-  },
-  "bin" : {
-    "salesforce-source-gen": "./src/cli.js"
-  },
   "keywords": [
     "salesforce",
     "force.com",
@@ -24,25 +12,6 @@
     "source-gen",
     "salesforce-metadata"
   ],
-  "author": "Ondřej Kratochvíl <ondrakratochvil96@gmail.com>",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "find": "^0.3.0",
-    "fs-extra": "^8.1.0",
-    "salesforce-metadata": "^0.0.8",
-    "slash": "^3.0.0"
-  },
-  "devDependencies": {
-    "@types/find": "^0.2.1",
-    "@types/fs-extra": "^8.0.1",
-    "@types/jest": "^24.0.23",
-    "@types/xml2js": "^0.4.5",
-    "jest": "^24.9.0",
-    "ts-jest": "^24.2.0",
-    "tslint": "^5.20.1",
-    "tslint-microsoft-contrib": "^5.2.1",
-    "typescript": "^3.7.2"
-  },
   "homepage": "https://github.com/kratoon3/salesforce-source-gen",
   "bugs": {
     "url": "https://github.com/kratoon3/salesforce-source-gen/issues"
@@ -50,5 +19,63 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/kratoon3/salesforce-source-gen.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Ondřej Kratochvíl <ondrakratochvil96@gmail.com>",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": {
+    "salesforce-source-gen": "./lib/cli.js"
+  },
+  "files": [
+    "/bin",
+    "/lib",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "coverage": "jest --coverage",
+    "test": "echo NO TESTS",
+    "lint": "tslint src/**/*.ts --config tslint.json",
+    "prepack": "rm -rf lib && npm run lint && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "postpack": "rm -f oclif.manifest.json",
+    "version": "oclif-dev readme && git add README.md",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@oclif/command": "^1.5.19",
+    "@oclif/config": "^1.14.0",
+    "@oclif/plugin-help": "^2.2.3",
+    "find": "^0.3.0",
+    "fs-extra": "^8.1.0",
+    "salesforce-metadata": "^0.0.10",
+    "slash": "^3.0.0",
+    "tslib": "^1.11.1"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "^1.22.2",
+    "@oclif/plugin-legacy": "^1.1.4",
+    "@types/find": "^0.2.1",
+    "@types/fs-extra": "^8.0.1",
+    "@types/jest": "^24.0.23",
+    "@types/xml2js": "^0.4.5",
+    "globby": "^11.0.0",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
+    "ts-node": "^8.6.2",
+    "tslint": "^5.20.1",
+    "tslint-microsoft-contrib": "^5.2.1",
+    "typescript": "^3.7.2"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "oclif": {
+    "commands": "./lib/commands",
+    "bin": "salesforce-source-gen",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
   }
 }
