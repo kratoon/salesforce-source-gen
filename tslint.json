@@ -42,6 +42,7 @@
     "no-for-in": false,
     "no-console": false,
     "no-default-export": false,
+    "no-http-string": false,
     "no-parameter-properties": false,
     "no-relative-imports": false,
     "no-reserved-keywords": false,
@@ -59,6 +60,7 @@
     ],
     "react-a11y-event-has-role": false,
     "static-this": true,
+    "trailing-comma": false,
     "typedef": [
       true,
       "call-signature",

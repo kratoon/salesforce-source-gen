@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
+    "importHelpers": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "baseUrl": ".",
     "declaration": true,
     "module": "commonjs",
-    "target": "es5",
+    "outDir": "lib",
+    "rootDir": "src",
+    "target": "es2017",
     "lib": [
       "es2017",
       "es7",
@@ -15,11 +18,11 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
-    "sourceMap": true,
-    "rootDir": "src"
+    "sourceMap": true
   },
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "lib"
   ]
 }

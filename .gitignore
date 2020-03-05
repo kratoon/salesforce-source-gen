@@ -1,3 +1,11 @@
+*-debug.log
+*-error.log
+/.nyc_output
+/dist
+/lib
+/tmp
+/yarn.lock
+
 .idea/
 *.iml
 
@@ -11,3 +19,5 @@ src/**/*.js.map
 tests/**/*d.ts
 tests/**/*.js
 tests/**/*.js.map
+
+oclif.manifest.json

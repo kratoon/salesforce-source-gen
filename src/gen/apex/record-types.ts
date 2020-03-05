@@ -1,13 +1,11 @@
-/**
- * Options to generate Apex class for record types.
- */
-import find from "find";
 import fs from "fs-extra";
 import {join} from "path";
-import {readMetadataXML} from "salesforce-metadata";
-import {RecordType} from "salesforce-metadata/src/metadata-types";
+import {readMetadataXML, writeMetadataXML} from "salesforce-metadata";
+import {findCustomObjectChildFiles} from "salesforce-metadata/src/find-metadata";
+import {ApexClass, RecordType} from "salesforce-metadata/src/metadata-types";
 import slash from "slash";
 import {loadProject, Project} from "../../project";
+import {apexNotice} from "./notice";
 
 export interface RecordTypesGenOptions {
     /**
@@ -27,17 +25,13 @@ export interface RecordTypesGenOptions {
      */
     sourceApiVersion?: string;
     /**
-     * Default: true.
+     * Include inactive record types. Default: false.
      */
-    activeOnly?: boolean;
+    includeInactive?: boolean;
     /**
-     * Default: true.
+     * Do not generate test class. Default: false.
      */
-    tests?: boolean;
-    /**
-     * Cut '__c' from object names. Default: true.
-     */
-    trimCustomSuffix?: boolean;
+    ignoreTestClass?: boolean;
 }
 
 export function generateRecordTypesClass(options: RecordTypesGenOptions = {}): void {
@@ -49,11 +43,11 @@ export function generateRecordTypesClass(options: RecordTypesGenOptions = {}): v
     const outputDir: string = options.outputDir || project.join(project.sfdxDefaultProjectDirectory, "main", "default", "classes");
     const outputClassName: string = options.outputClassName || "RecordTypes";
     const sourceApiVersion: string = options.sourceApiVersion || project.sourceApiVersion;
-    const activeOnly: boolean = options.activeOnly === undefined ? true : options.activeOnly;
-    const tests: boolean = options.tests === undefined ? true : options.tests;
-    const trimCustomSuffix: boolean = options.trimCustomSuffix === undefined ? true : options.trimCustomSuffix;
+    const activeOnly: boolean = options.includeInactive === undefined ? true : !options.includeInactive;
+    const tests: boolean = options.ignoreTestClass === undefined ? true : !options.ignoreTestClass;
+    const trimCustomSuffix: boolean = true;
     // Find paths to project record types.
-    const recordTypePaths: string[] = findCustomObjectChildFiles(project, "recordType");
+    const recordTypePaths: string[] = findCustomObjectChildFiles("recordType", project.path);
     buildContent(recordTypePaths, activeOnly, trimCustomSuffix, outputClassName)
         .then((content: string) => {
             const classPath: string = join(outputDir, `${outputClassName}.cls`);
@@ -81,14 +75,17 @@ function writeApexClassFile(path: string, content: string): void {
 }
 
 function writeApexClassMetaFile(path: string, apiVersion: string): void {
-    const data: string = `<?xml version="1.0" encoding="UTF-8"?>
-<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
-    <apiVersion>${apiVersion}</apiVersion>
-    <status>Active</status>
-</ApexClass>
-`;
-    fs.ensureFileSync(path);
-    fs.writeFileSync(path, data);
+    const data: {ApexClass: ApexClass} = {
+        ApexClass: {
+            $: {
+                xmlns: "http://soap.sforce.com/2006/04/metadata"
+            },
+            // @ts-ignore
+            apiVersion: apiVersion,
+            status: ["Active"]
+        }
+    };
+    writeMetadataXML(path, data);
 }
 
 function buildContent(
@@ -113,7 +110,7 @@ function buildContent(
             });
         }, Promise.resolve(""))
         .then((classContent: string) => {
-            return `${notice()}public inherited sharing class ${className} {\n\n${classContent}}\n`;
+            return `${apexNotice()}public inherited sharing class ${className} {\n\n${classContent}}\n`;
         });
 }
 
@@ -142,7 +139,7 @@ function buildTestContent(
 }
 
 function buildTestClassContent(classContent: string, className: string): string {
-    return `${notice()}@IsTest private class ${className}Test {
+    return `${apexNotice()}@IsTest private class ${className}Test {
 
     private static void notNull(Object it) {
         System.assertNotEquals(null, it);
@@ -150,8 +147,7 @@ function buildTestClassContent(classContent: string, className: string): string 
     
     @IsTest private static void test() {
 ${classContent}    }
-}
-`;
+}`;
 }
 
 function buildRecordTypeProperty(
@@ -168,8 +164,7 @@ function buildRecordTypeProperty(
     const idPropertyName: string = `${propertyName}_ID`;
     return `    public static RecordTypeInfo ${propertyName} {
         get { return ${propertyName} = ${propertyName} != null
-                ? ${propertyName} 
-                : Schema.SObjectType.${objectName}.getRecordTypeInfosByDeveloperName().get('${fullName[0]}'); }
+                ? ${propertyName} : Schema.SObjectType.${objectName}.getRecordTypeInfosByDeveloperName().get('${fullName[0]}'); }
         private set;
     }
     public static Id ${idPropertyName} {
@@ -195,20 +190,7 @@ function buildTestRecordTypeProperty(
     return `        notNull(${className}.${idPropertyName});\n`;
 }
 
-function findCustomObjectChildFiles(project: Project, childXmlName: string): string[] {
-    return find.fileSync(new RegExp(`.*?[/\\\\\]objects[/\\\\\].*?[/\\\\\]?\.${childXmlName}-meta\.xml`), project.path);
-}
-
 function pathToObjectName(path: string): string | undefined {
     const execResult: any = slash(path).match(/.*[/\\]objects[/\\](.*?)[/\\].*/);
     return execResult ? execResult[1] : undefined;
-}
-
-function notice(): string {
-    return `/**
- * This class was generated with "salesforce-source-gen".
- * Project: https://github.com/kratoon3/salesforce-source-gen
- * Issues: https://github.com/kratoon3/salesforce-source-gen/issues 
- */
-`;
 }
