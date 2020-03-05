@@ -44,15 +44,15 @@ export interface PicklistsGenOptions {
     /**
      * Prefix for classes generated from custom fields. Default: empty.
      */
-    picklistPrefix?: string;
+    customFieldPrefix?: string;
     /**
      * Suffix for classes generated from custom fields. Default: empty.
      */
-    picklistSuffix?: string;
+    customFieldSuffix?: string;
     /**
      * String between sobject name and field name. Default: '_'.
      */
-    picklistInfix?: string;
+    customFieldInfix?: string;
     /**
      * Prefix for classes generated from standard value sets. Default: empty.
      */
@@ -79,9 +79,9 @@ export function generatePicklistClasses(options: PicklistsGenOptions = {}): void
     // Get options with default values.
     const outputDir: string = options.outputDir || project.join(project.sfdxDefaultProjectDirectory, "main", "default", "classes");
     const sourceApiVersion: string = options.sourceApiVersion || project.sourceApiVersion;
-    const picklistPrefix: string = options.picklistPrefix || "";
-    const picklistSuffix: string = options.picklistSuffix || "";
-    const picklistInfix: string = options.picklistInfix || "_";
+    const customFieldPrefix: string = options.customFieldPrefix || "";
+    const customFieldSuffix: string = options.customFieldSuffix || "";
+    const customFieldInfix: string = options.customFieldInfix || "_";
     const standardValueSetPrefix: string = options.standardValueSetPrefix || "";
     const standardValueSetSuffix: string = options.standardValueSetSuffix || "";
     const globalValueSetPrefix: string = options.globalValueSetPrefix || "";
@@ -89,7 +89,7 @@ export function generatePicklistClasses(options: PicklistsGenOptions = {}): void
     const chain: Promise<void> = Promise.resolve();
     if (!options.ignorePicklists) {
         chain.then(() => generatePicklistClassesFromCustomFields(
-            project, outputDir, picklistInfix, picklistPrefix, picklistSuffix, sourceApiVersion
+            project, outputDir, customFieldInfix, customFieldPrefix, customFieldSuffix, sourceApiVersion
         ));
     }
     if (!options.ignoreStandardValueSets) {
@@ -107,9 +107,9 @@ export function generatePicklistClasses(options: PicklistsGenOptions = {}): void
 function generatePicklistClassesFromCustomFields(
     project: Project,
     outputDir: string,
-    picklistInfix: string,
-    picklistPrefix: string,
-    picklistSuffix: string,
+    infix: string,
+    prefix: string,
+    suffix: string,
     sourceApiVersion: string
 ): Promise<void> {
     console.log("Building constant classes from custom fields.");
@@ -127,10 +127,10 @@ function generatePicklistClassesFromCustomFields(
                     const trimmedObjectName: string = objectName.replace(/__c|__mdt|_/g, "");
                     const trimmedFieldName: string = fieldName.replace(/__c|__mdt|_/g, "");
                     const availableLength: number = APEX_CLASS_NAME_MAX_LEN -
-                        (picklistPrefix.length + picklistInfix.length + picklistSuffix.length);
-                    const fullBaseName: string = `${trimmedObjectName}${picklistInfix}${trimmedFieldName}`;
+                        (prefix.length + infix.length + suffix.length);
+                    const fullBaseName: string = `${trimmedObjectName}${infix}${trimmedFieldName}`;
                     const baseName: string = fullBaseName.substring(0, availableLength);
-                    const className: string = `${picklistPrefix}${baseName}${picklistSuffix}`;
+                    const className: string = `${prefix}${baseName}${suffix}`;
                     const content: string | undefined = buildApexClassContentFromPicklistField(
                         it.CustomField, objectName, className
                     );
@@ -148,8 +148,8 @@ function generatePicklistClassesFromCustomFields(
 function generatePicklistClassesFromStandardValueSets(
     project: Project,
     outputDir: string,
-    standardValueSetPrefix: string,
-    standardValueSetSuffix: string,
+    prefix: string,
+    suffix: string,
     sourceApiVersion: string
 ): Promise<void> {
     const standardValueSetPaths: string[] = findFilesByMetadataType("StandardValueSet", project.path);
@@ -162,12 +162,15 @@ function generatePicklistClassesFromStandardValueSets(
                 if (!valueSetName) {
                     throw Error(`Couldn't parse standard value set name from path ${setPath}`);
                 }
-                const availableLength: number = APEX_CLASS_NAME_MAX_LEN -
-                    (standardValueSetPrefix.length + standardValueSetSuffix.length);
+                const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
                 // todo fix LeadStatus conflict
+                if (CONFLICT_VALUE_SET_NAMES.includes(valueSetName)) {
+                    console.warn(`Conflict with SObject, ignoring: ${valueSetName}`);
+                    return;
+                }
                 const baseName: string = (CONFLICT_VALUE_SET_NAMES.includes(valueSetName)
                     ? `${valueSetName}2` : valueSetName).substring(0, availableLength);
-                const className: string = `${standardValueSetPrefix}${baseName}${standardValueSetSuffix}`;
+                const className: string = `${prefix}${baseName}${suffix}`;
                 const content: string | undefined = buildApexClassContentFromStandardValueSet(
                     it.StandardValueSet, valueSetName, className
                 );
@@ -184,8 +187,8 @@ function generatePicklistClassesFromStandardValueSets(
 function generatePicklistClassesFromGlobalValueSets(
     project: Project,
     outputDir: string,
-    globalValueSetPrefix: string,
-    globalValueSetSuffix: string,
+    prefix: string,
+    suffix: string,
     sourceApiVersion: string
 ): Promise<void> {
     const globalValueSetPaths: string[] = findFilesByMetadataType("GlobalValueSet", project.path);
@@ -198,10 +201,9 @@ function generatePicklistClassesFromGlobalValueSets(
                 if (!valueSetName) {
                     throw Error(`Couldn't parse global value set name from path ${setPath}`);
                 }
-                const availableLength: number = APEX_CLASS_NAME_MAX_LEN -
-                    (globalValueSetPrefix.length + globalValueSetSuffix.length);
+                const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
                 const baseName: string = valueSetName.substring(0, availableLength);
-                const className: string = `${globalValueSetPrefix}${baseName}${globalValueSetSuffix}`;
+                const className: string = `${prefix}${baseName}${suffix}`;
                 const content: string | undefined = buildApexClassContentFromGlobalValueSet(
                     it.GlobalValueSet, valueSetName, className
                 );

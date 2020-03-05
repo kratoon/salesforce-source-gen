@@ -12,9 +12,15 @@ export default class Picklists extends Command {
         ignorePicklists: flags.boolean({description: "Ignore custom fields."}),
         ignoreStandardValueSets: flags.boolean({description: "Ignore standard value sets."}),
         ignoreGlobalValueSets: flags.boolean({description: "Ignore global value sets."}),
-        picklistPrefix: flags.string({description: "Prefix for classes generated from custom fields. Default: empty."}),
-        picklistSuffix: flags.string({description: "Suffix for classes generated from custom fields. Default: empty."}),
-        picklistInfix: flags.string({description: "String between sobject name and field name. Default: '_'."}),
+        customFieldPrefix: flags.string({
+            description: "Prefix for classes generated from custom fields. Default: empty."
+        }),
+        customFieldSuffix: flags.string({
+            description: "Suffix for classes generated from custom fields. Default: empty."
+        }),
+        customFieldInfix: flags.string({
+            description: "String between sobject name and field name. Default: '_'."
+        }),
         standardValueSetPrefix: flags.string({description: "Prefix for classes generated from standard value sets. Default: empty."}),
         standardValueSetSuffix: flags.string({description: "Suffix for classes generated from standard value sets. Default: empty."}),
         globalValueSetPrefix: flags.string({description: "Suffix for classes generated from global value sets. Default: empty."}),
