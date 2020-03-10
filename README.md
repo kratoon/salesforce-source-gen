@@ -21,7 +21,7 @@ $ npm install -g salesforce-source-gen
 $ salesforce-source-gen COMMAND
 running command...
 $ salesforce-source-gen (-v|--version|version)
-salesforce-source-gen/0.0.9 linux-x64 node-v8.10.0
+salesforce-source-gen/0.0.10 linux-x64 node-v8.10.0
 $ salesforce-source-gen --help [COMMAND]
 USAGE
   $ salesforce-source-gen COMMAND
@@ -89,9 +89,29 @@ OPTIONS
 
   --standardValueSetSuffix=standardValueSetSuffix  Suffix for classes generated from standard value sets. Default:
                                                    empty.
+
+DESCRIPTION
+  To filter only specific picklists, add to your package.json 'include'.
+  Only picklists defined in include will be generated.
+  Include can contain:
+       I)   ObjectApiName - all custom fields of that object will be used
+       II)  ObjectApiName.FieldApiName - custom field will be used
+       III) StandardValueSetName - standard value set will be used
+       IV)  GlobalValueSetName - global value set will be used
+  {
+       "sourceGen": {
+           "picklists": {
+               "include": [
+                   "Account",
+                   "Building__c.Phase__c",
+                   "Industry"
+               ]
+           }
+       }
+  }
 ```
 
-_See code: [src/commands/picklists.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.9/src/commands/picklists.ts)_
+_See code: [src/commands/picklists.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.10/src/commands/picklists.ts)_
 
 ## `salesforce-source-gen record-types`
 
@@ -116,5 +136,5 @@ DESCRIPTION
   or `RecordTypes.ACCOUNT_AGENT` to access RecordTypeInfo.
 ```
 
-_See code: [src/commands/record-types.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.9/src/commands/record-types.ts)_
+_See code: [src/commands/record-types.ts](https://github.com/kratoon3/salesforce-source-gen/blob/v0.0.10/src/commands/record-types.ts)_
 <!-- commandsstop -->
