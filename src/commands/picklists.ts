@@ -2,7 +2,26 @@ import {Command, flags} from "@oclif/command";
 import {generatePicklistClasses} from "..";
 
 export default class Picklists extends Command {
-    public static description: string = "Generate Apex constants from field picklists and standard value sets.";
+    public static description: string = `Generate Apex constants from field picklists and standard value sets.
+To filter only specific picklists, add to your package.json 'include'.
+Only picklists defined in include will be generated.
+Include can contain:
+    I)   ObjectApiName - all custom fields of that object will be used
+    II)  ObjectApiName.FieldApiName - custom field will be used
+    III) StandardValueSetName - standard value set will be used
+    IV)  GlobalValueSetName - global value set will be used
+{
+    "sourceGen": {
+        "picklists": {
+            "include": [
+                "Account",
+                "Building__c.Phase__c",
+                "Industry"
+            ]
+        }
+    }
+}
+`;
 
     public static flags: flags.Input<any> = {
         help: flags.help({char: "h"}),

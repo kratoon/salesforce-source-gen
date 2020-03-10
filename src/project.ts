@@ -27,17 +27,30 @@ export class Project {
         return join(this.path, "sfdx-project.json");
     }
 
+    public get packageJsonPath(): string {
+        return join(this.path, "package.json");
+    }
+
     public get sfdxProjectConfig(): any {
         if (!this.isDx) {
             throw Error(`Not a DX project: ${this.path}`);
         }
-        const configPath: string = this.sfdxProjectConfigPath;
-        const projectConfig: Buffer = fs.readFileSync(configPath);
+        const projectConfig: Buffer = fs.readFileSync(this.sfdxProjectConfigPath);
         try {
             return JSON.parse(projectConfig.toString());
         } catch (e) {
             console.error(e);
-            throw Error(`Failed to parse project config: ${configPath}`);
+            throw Error(`Failed to parse project config: ${this.sfdxProjectConfigPath}`);
+        }
+    }
+
+    public get packageJson(): any {
+        const projectConfig: Buffer = fs.readFileSync(this.packageJsonPath);
+        try {
+            return JSON.parse(projectConfig.toString());
+        } catch (e) {
+            console.error(e);
+            throw Error(`Failed to parse package.json: ${this.packageJsonPath}`);
         }
     }
 

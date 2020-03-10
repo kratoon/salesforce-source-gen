@@ -86,20 +86,21 @@ export function generatePicklistClasses(options: PicklistsGenOptions = {}): void
     const standardValueSetSuffix: string = options.standardValueSetSuffix || "";
     const globalValueSetPrefix: string = options.globalValueSetPrefix || "";
     const globalValueSetSuffix: string = options.globalValueSetSuffix || "";
-    const chain: Promise<void> = Promise.resolve();
+    const include: string[] | undefined = project.packageJson?.sourceGen?.picklists?.include || undefined;
+    let chain: Promise<void> = Promise.resolve();
     if (!options.ignorePicklists) {
-        chain.then(() => generatePicklistClassesFromCustomFields(
-            project, outputDir, customFieldInfix, customFieldPrefix, customFieldSuffix, sourceApiVersion
+        chain = chain.then(() => generatePicklistClassesFromCustomFields(
+            project, outputDir, include, customFieldInfix, customFieldPrefix, customFieldSuffix, sourceApiVersion
         ));
     }
     if (!options.ignoreStandardValueSets) {
-        chain.then(() => generatePicklistClassesFromStandardValueSets(project, outputDir,
-            standardValueSetPrefix, standardValueSetSuffix, sourceApiVersion
+        chain = chain.then(() => generatePicklistClassesFromStandardValueSets(
+            project, outputDir, include, standardValueSetPrefix, standardValueSetSuffix, sourceApiVersion
         ));
     }
     if (!options.ignoreGlobalValueSets) {
-        chain.then(() => generatePicklistClassesFromGlobalValueSets(project, outputDir,
-            globalValueSetPrefix, globalValueSetSuffix, sourceApiVersion
+        chain.then(() => generatePicklistClassesFromGlobalValueSets(
+            project, outputDir, include, globalValueSetPrefix, globalValueSetSuffix, sourceApiVersion
         ));
     }
 }
@@ -107,6 +108,7 @@ export function generatePicklistClasses(options: PicklistsGenOptions = {}): void
 function generatePicklistClassesFromCustomFields(
     project: Project,
     outputDir: string,
+    include: string[] | undefined,
     infix: string,
     prefix: string,
     suffix: string,
@@ -124,21 +126,23 @@ function generatePicklistClassesFromCustomFields(
                         throw Error(`Couldn't parse object name from path ${fieldPath}`);
                     }
                     const fieldName: string = it.CustomField.fullName[0];
-                    const trimmedObjectName: string = objectName.replace(/__c|__mdt|_/g, "");
-                    const trimmedFieldName: string = fieldName.replace(/__c|__mdt|_/g, "");
-                    const availableLength: number = APEX_CLASS_NAME_MAX_LEN -
-                        (prefix.length + infix.length + suffix.length);
-                    const fullBaseName: string = `${trimmedObjectName}${infix}${trimmedFieldName}`;
-                    const baseName: string = fullBaseName.substring(0, availableLength);
-                    const className: string = `${prefix}${baseName}${suffix}`;
-                    const content: string | undefined = buildApexClassContentFromPicklistField(
-                        it.CustomField, objectName, className
-                    );
-                    if (content) {
-                        writeApexClassFile(join(outputDir, `${className}.cls`), content);
-                        writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
-                    } else {
-                        console.log(`No values, skipping: ${objectName}.${fieldName}`);
+                    if (!include || include.includes(objectName) || include.includes(`${objectName}.${fieldName}`)) {
+                        const trimmedObjectName: string = objectName.replace(/__c|__mdt|_/g, "");
+                        const trimmedFieldName: string = fieldName.replace(/__c|__mdt|_/g, "");
+                        const availableLength: number = APEX_CLASS_NAME_MAX_LEN -
+                            (prefix.length + infix.length + suffix.length);
+                        const fullBaseName: string = `${trimmedObjectName}${infix}${trimmedFieldName}`;
+                        const baseName: string = fullBaseName.substring(0, availableLength);
+                        const className: string = `${prefix}${baseName}${suffix}`;
+                        const content: string | undefined = buildApexClassContentFromPicklistField(
+                            it.CustomField, objectName, className
+                        );
+                        if (content) {
+                            writeApexClassFile(join(outputDir, `${className}.cls`), content);
+                            writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
+                        } else {
+                            console.log(`No values, skipping: ${objectName}.${fieldName}`);
+                        }
                     }
                 }
             });
@@ -148,6 +152,7 @@ function generatePicklistClassesFromCustomFields(
 function generatePicklistClassesFromStandardValueSets(
     project: Project,
     outputDir: string,
+    include: string[] | undefined,
     prefix: string,
     suffix: string,
     sourceApiVersion: string
@@ -158,27 +163,24 @@ function generatePicklistClassesFromStandardValueSets(
             console.log("Building constant classes from standard value sets.");
             sets.forEach((it: { StandardValueSet: StandardValueSet}, idx) => {
                 const setPath: string = standardValueSetPaths[idx];
-                const valueSetName: string | undefined = pathToMetadataName(setPath, "standardValueSets", "\.standardValueSet-meta\.xml");
+                let valueSetName: string | undefined = pathToMetadataName(setPath, "standardValueSets", "\.standardValueSet-meta\.xml");
                 if (!valueSetName) {
                     throw Error(`Couldn't parse standard value set name from path ${setPath}`);
                 }
-                const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
-                // todo fix LeadStatus conflict
-                if (CONFLICT_VALUE_SET_NAMES.includes(valueSetName)) {
-                    console.warn(`Conflict with SObject, ignoring: ${valueSetName}`);
-                    return;
-                }
-                const baseName: string = (CONFLICT_VALUE_SET_NAMES.includes(valueSetName)
-                    ? `${valueSetName}2` : valueSetName).substring(0, availableLength);
-                const className: string = `${prefix}${baseName}${suffix}`;
-                const content: string | undefined = buildApexClassContentFromStandardValueSet(
-                    it.StandardValueSet, valueSetName, className
-                );
-                if (content) {
-                    writeApexClassFile(join(outputDir, `${className}.cls`), content);
-                    writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
-                } else {
-                    console.log(`No values, skipping: ${valueSetName}`);
+                if (!include || include.includes(valueSetName)) {
+                    valueSetName = CONFLICT_VALUE_SET_NAMES.includes(valueSetName) ? `${valueSetName}2` : valueSetName;
+                    const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
+                    const baseName: string = valueSetName.substring(0, availableLength);
+                    const className: string = `${prefix}${baseName}${suffix}`;
+                    const content: string | undefined = buildApexClassContentFromStandardValueSet(
+                        it.StandardValueSet, valueSetName, className
+                    );
+                    if (content) {
+                        writeApexClassFile(join(outputDir, `${className}.cls`), content);
+                        writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
+                    } else {
+                        console.log(`No values, skipping: ${valueSetName}`);
+                    }
                 }
             });
         });
@@ -187,6 +189,7 @@ function generatePicklistClassesFromStandardValueSets(
 function generatePicklistClassesFromGlobalValueSets(
     project: Project,
     outputDir: string,
+    include: string[] | undefined,
     prefix: string,
     suffix: string,
     sourceApiVersion: string
@@ -201,17 +204,19 @@ function generatePicklistClassesFromGlobalValueSets(
                 if (!valueSetName) {
                     throw Error(`Couldn't parse global value set name from path ${setPath}`);
                 }
-                const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
-                const baseName: string = valueSetName.substring(0, availableLength);
-                const className: string = `${prefix}${baseName}${suffix}`;
-                const content: string | undefined = buildApexClassContentFromGlobalValueSet(
-                    it.GlobalValueSet, valueSetName, className
-                );
-                if (content) {
-                    writeApexClassFile(join(outputDir, `${className}.cls`), content);
-                    writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
-                } else {
-                    console.log(`No values, skipping: ${valueSetName}`);
+                if (!include || include.includes(valueSetName)) {
+                    const availableLength: number = APEX_CLASS_NAME_MAX_LEN - (prefix.length + suffix.length);
+                    const baseName: string = valueSetName.substring(0, availableLength);
+                    const className: string = `${prefix}${baseName}${suffix}`;
+                    const content: string | undefined = buildApexClassContentFromGlobalValueSet(
+                        it.GlobalValueSet, valueSetName, className
+                    );
+                    if (content) {
+                        writeApexClassFile(join(outputDir, `${className}.cls`), content);
+                        writeApexClassMetaFile(join(outputDir, `${className}.cls-meta.xml`), sourceApiVersion);
+                    } else {
+                        console.log(`No values, skipping: ${valueSetName}`);
+                    }
                 }
             });
         });
